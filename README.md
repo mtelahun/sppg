@@ -9,7 +9,7 @@ None of these problems is the fault of the program. I've gotten around them by u
 
 Enter [diceware](https://theworld.com/~reinhold/diceware.html). Diceware is a method for generating very secure yet easily memorizable passwords. The apeal for me is that it allows me to remove all the things that make remembering a password difficult for me: special characters and upper case letters. Now my passwords can just be 4 or 5 easily memorizable lower case words. I just needed to tackle one more problem. I need a command line program to generate them for me. That tools is sppg.
 
-##Install
+#Installation
 
-##Usage
+#Usage
 
