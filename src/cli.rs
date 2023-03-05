@@ -5,6 +5,8 @@ use clap::Parser;
 pub struct Args {
     #[arg(short, long, default_value_t = 6, value_parser = clap::value_parser!(u8).range(1..))]
     pub num_of_pass: u8,
+    #[arg(short, long, default_value_t = 5, value_parser = clap::value_parser!(u8).range(1..))]
+    pub word_count: u8,
 }
 
 pub fn process_command_line() -> Args {
@@ -60,5 +62,25 @@ mod test {
             clap::error::ErrorKind::ValueValidation,
             "if -n is zero the program returns a ValueValidation error"
         );
+    }
+
+    #[test]
+    fn verify_cli_arg_w_zero_is_error() {
+        assert_eq!(
+            Args::try_parse_from(["sppg", "-w", "0"])
+                .expect_err("this command is supposed to fail")
+                .kind(),
+            clap::error::ErrorKind::ValueValidation,
+            "if -w is zero the program returns a ValueValidation error"
+        );
+    }
+
+    #[test]
+    fn verify_cli_arg_w_defaults_to_5() {
+        let value = Args::try_parse_from(["sppg"])
+            .expect("this command is supposed to work")
+            .word_count;
+
+        assert_eq!(value, 5, "default -w value is 5");
     }
 }
