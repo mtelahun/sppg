@@ -2,17 +2,35 @@ use std::collections::HashMap;
 
 use rand::distributions::{Distribution, Uniform};
 
+pub mod cli;
 pub mod original_wordlist;
+
+use crate::cli::process_command_line;
 use original_wordlist::ORIGINAL_WORDLIST;
 
 fn main() {
+    let cli_args = process_command_line();
+    let num_choices = cli_args.num_of_pass;
     let diceware_map: HashMap<&str, &str> = ORIGINAL_WORDLIST.into_iter().collect();
-    for _ in 0..4 {
-        let lookup = roll_dice();
-        let word = lookup_word(&lookup, &diceware_map);
-        print!("{word} ");
+    let list = iterate(num_choices, &diceware_map);
+    for l in list {
+        println!("{l}");
     }
-    println!();
+}
+
+fn iterate(iterations: u8, diceware_map: &HashMap<&str, &str>) -> Vec<String> {
+    let mut list = Vec::<String>::new();
+    for _ in 0..iterations {
+        let mut passphrase = String::new();
+        for _ in 0..4 {
+            let lookup = roll_dice();
+            let word = lookup_word(&lookup, diceware_map);
+            passphrase.push_str(&format!("{word} "));
+        }
+        list.push(passphrase.trim().to_string())
+    }
+
+    list
 }
 
 fn roll_dice() -> String {
@@ -63,5 +81,15 @@ mod tests {
                 index, expected
             )
         }
+    }
+
+    #[test]
+    fn default_iterations() {
+        let cli_args = process_command_line();
+        let num_choices = cli_args.num_of_pass;
+        let diceware_map: HashMap<&str, &str> = ORIGINAL_WORDLIST.into_iter().collect();
+        let list = iterate(num_choices, &diceware_map);
+
+        assert_eq!(list.len(), 6, "number of passphrases is 6");
     }
 }

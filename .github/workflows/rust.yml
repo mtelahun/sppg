@@ -88,7 +88,7 @@ jobs:
         uses: actions-rs/tarpaulin@v0.1
         with:
           version: 0.22.0
-          args: '--ignore-tests'
+          args: '--ignore-tests --implicit-test-threads'
         env:
           RUST_MIN_STACK: 8388608
       
