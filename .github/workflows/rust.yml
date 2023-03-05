@@ -14,17 +14,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    # services:
-      # postgres:
-      #   image: postgres:12
-      #   env:
-      #     POSTGRES_USER: postgres
-      #     POSTGRES_PASSWORD: password
-      #   ports:
-      #     - 5432:5432
-    # env:
-    #   SQLX_VERSION: 0.6.2
-    #   SQLX_FEATURES: "rustls,postgres"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -44,14 +33,12 @@ jobs:
           toolchain: stable
           override: true
 
-      # - name: Migrate database
-      #   run: |
-      #     echo sudo apt-get install libpq-dev -y
-      #     echo SKIP_DOCKER=true ./scripts/init_db.sh
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
+        env:
+          RUST_MIN_STACK: 8388608
 
   fmt:
     name: Rustfmt
@@ -86,23 +73,6 @@ jobs:
   coverage:
     name: Code coverage
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:12
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-      mailhog:
-        image: mailhog/mailhog:v1.0.1
-        ports:
-          - 1025:1025
-          - 8025:8025
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
 
     steps:
       - name: Checkout repository
@@ -119,6 +89,8 @@ jobs:
         with:
           version: 0.22.0
           args: '--ignore-tests'
+        env:
+          RUST_MIN_STACK: 8388608
       
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3

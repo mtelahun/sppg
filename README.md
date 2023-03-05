@@ -1,4 +1,7 @@
 # sppg
+![Rust](https://github.com/mtelahun/sppg/actions/workflows/rust.yml/badge.svg)
+[![codecov](https://codecov.io/gh/mtelahun/sppg/branch/main/graph/badge.svg?token=A1P9I5E2LU)](https://codecov.io/gh/trevi-software/rhodos)
+[![License](https://img.shields.io/badge/License-BSD_2--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 Secure passphrase generator
 For a long time I've relied on `apg`, a random password generator that generates pronounceable random passwords, to create my passwords for me. I've been happy with it so far but there are a few problems with using it.
 1. I've found that my limit for secure password that I can memorize in a reasonable amount of time is about 12 characters
