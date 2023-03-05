@@ -10,19 +10,18 @@ use original_wordlist::ORIGINAL_WORDLIST;
 
 fn main() {
     let cli_args = process_command_line();
-    let num_choices = cli_args.num_of_pass;
     let diceware_map: HashMap<&str, &str> = ORIGINAL_WORDLIST.into_iter().collect();
-    let list = iterate(num_choices, &diceware_map);
+    let list = iterate(cli_args.num_of_pass, cli_args.word_count, &diceware_map);
     for l in list {
         println!("{l}");
     }
 }
 
-fn iterate(iterations: u8, diceware_map: &HashMap<&str, &str>) -> Vec<String> {
+fn iterate(iterations: u8, word_count: u8, diceware_map: &HashMap<&str, &str>) -> Vec<String> {
     let mut list = Vec::<String>::new();
     for _ in 0..iterations {
         let mut passphrase = String::new();
-        for _ in 0..4 {
+        for _ in 0..word_count {
             let lookup = roll_dice();
             let word = lookup_word(&lookup, diceware_map);
             passphrase.push_str(&format!("{word} "));
@@ -84,12 +83,35 @@ mod tests {
     }
 
     #[test]
-    fn default_iterations() {
+    fn default_iterations_and_word_count() {
         let cli_args = process_command_line();
         let num_choices = cli_args.num_of_pass;
+        let word_count = cli_args.word_count;
         let diceware_map: HashMap<&str, &str> = ORIGINAL_WORDLIST.into_iter().collect();
-        let list = iterate(num_choices, &diceware_map);
+        let list = iterate(num_choices, word_count, &diceware_map);
 
         assert_eq!(list.len(), 6, "number of passphrases is 6");
+
+        for l in list {
+            let list: Vec<&str> = l.split_whitespace().collect();
+
+            assert_eq!(list.len(), 5, "words in passphrase = {}", word_count);
+        }
+    }
+
+    #[test]
+    fn iterations_and_word_count() {
+        let num_choices = 32;
+        let word_count = 15;
+        let diceware_map: HashMap<&str, &str> = ORIGINAL_WORDLIST.into_iter().collect();
+        let list = iterate(num_choices, word_count, &diceware_map);
+
+        assert_eq!(list.len(), 32, "number of passphrases is 6");
+
+        for l in list {
+            let list: Vec<&str> = l.split_whitespace().collect();
+
+            assert_eq!(list.len(), 15, "words in passphrase = {}", word_count);
+        }
     }
 }
