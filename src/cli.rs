@@ -9,6 +9,8 @@ pub struct Args {
     pub num_of_pass: u8,
     #[arg(short, long, default_value_t = 5, value_parser = clap::value_parser!(u8).range(1..))]
     pub word_count: u8,
+    #[arg(short = 's', long)]
+    pub use_special_char: bool,
 }
 
 pub fn process_command_line() -> Args {
@@ -104,5 +106,23 @@ mod test {
             .eff_word_list;
 
         assert!(value, "Arg -e is set to true");
+    }
+
+    #[test]
+    fn verify_cli_arg_s_is_true01() {
+        let value = Args::try_parse_from(["sppg", "--use-special-char"])
+            .expect("this command is supposed to work")
+            .use_special_char;
+
+        assert!(value, "Arg --use-special-char is set to true");
+    }
+
+    #[test]
+    fn verify_cli_arg_s_is_true02() {
+        let value = Args::try_parse_from(["sppg", "-s"])
+            .expect("this command is supposed to work")
+            .use_special_char;
+
+        assert!(value, "Arg -s is set to true");
     }
 }
