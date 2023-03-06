@@ -58,7 +58,14 @@ fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
             let word = lookup_word(&lookup, diceware_map);
             passphrase.push(word);
         }
+        if passphrase.is_insecure() {
+            continue;
+        }
         list.push(passphrase)
+    }
+    if list.is_empty() && iterations > 0 {
+        eprintln!("error: unable to derive a secure enough passphrase");
+        eprintln!("error: try increasing the word count or adding a special character.");
     }
 
     if cli_args.use_special_char {
@@ -163,7 +170,12 @@ mod tests {
         let word_count = cli_args.word_count;
         let list = iterate(&cli_args);
 
-        assert_eq!(list.len(), 6, "number of passphrases is {}", num_choices);
+        // Because there may be insecure passphrases we can't test for equality
+        assert!(
+            list.len() <= 6,
+            "number of passphrases is <= {}",
+            num_choices
+        );
 
         for pp in list {
             assert_eq!(pp.len(), 5, "words in passphrase = {}", word_count);
@@ -179,7 +191,12 @@ mod tests {
         cli_args.word_count = word_count;
         let list = iterate(&cli_args);
 
-        assert_eq!(list.len(), 12, "number of passphrases is {}", num_choices);
+        // Because there may be insecure passphrases we can't test for equality
+        assert!(
+            list.len() <= 12,
+            "number of passphrases is <= {}",
+            num_choices
+        );
 
         for pp in list {
             assert_eq!(pp.len(), 15, "words in passphrase = {}", word_count);
@@ -224,5 +241,17 @@ mod tests {
             output.contains(special_char),
             "the passphrase contains a special char"
         );
+    }
+
+    #[test]
+    fn no_insecure_passphrases() {
+        let num_choices = 1;
+        let word_count = 1;
+        let mut cli_args = process_command_line();
+        cli_args.num_of_pass = num_choices;
+        cli_args.word_count = word_count;
+        let list = iterate(&cli_args);
+
+        assert_eq!(list.len(), 0, "list of passphrases is empty");
     }
 }
