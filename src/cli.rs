@@ -3,6 +3,8 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
+    #[arg(short, long)]
+    pub eff_word_list: bool,
     #[arg(short, long, default_value_t = 6, value_parser = clap::value_parser!(u8).range(1..))]
     pub num_of_pass: u8,
     #[arg(short, long, default_value_t = 5, value_parser = clap::value_parser!(u8).range(1..))]
@@ -15,12 +17,14 @@ pub fn process_command_line() -> Args {
 
 #[cfg(test)]
 mod test {
+    use clap::CommandFactory;
+
     use super::*;
 
-    // #[test]
-    // fn verify_cli() {
-    //     Args::command().debug_assert()
-    // }
+    #[test]
+    fn verify_cli() {
+        Args::command().debug_assert()
+    }
 
     #[test]
     fn verify_cli_display_help() {
@@ -82,5 +86,23 @@ mod test {
             .word_count;
 
         assert_eq!(value, 5, "default -w value is 5");
+    }
+
+    #[test]
+    fn verify_cli_arg_e_defaults_to_false() {
+        let value = Args::try_parse_from(["sppg"])
+            .expect("this command is supposed to work")
+            .eff_word_list;
+
+        assert!(!value, "default -e value is false");
+    }
+
+    #[test]
+    fn verify_cli_arg_e_is_true() {
+        let value = Args::try_parse_from(["sppg", "--eff-word-list"])
+            .expect("this command is supposed to work")
+            .eff_word_list;
+
+        assert!(value, "Arg -e is set to true");
     }
 }
