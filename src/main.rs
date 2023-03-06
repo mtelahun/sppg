@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use rand::distributions::{Distribution, Uniform};
+use passphrase::PassPhrase;
+use rand::{
+    distributions::{Distribution, Uniform},
+    rngs::ThreadRng,
+};
 
 #[macro_use]
 extern crate lazy_static;
@@ -8,11 +12,14 @@ extern crate lazy_static;
 mod cli;
 mod eff_wordlist;
 mod original_wordlist;
+mod passphrase;
+mod special_char;
 
 use crate::{
     cli::{process_command_line, Args},
     eff_wordlist::EFF_WORDLIST,
     original_wordlist::ORIGINAL_WORDLIST,
+    special_char::SPECIAL_CHARS,
 };
 
 lazy_static! {
@@ -39,34 +46,72 @@ fn choose_word_list(cli_args: &Args) -> &'static HashMap<&'static str, &'static 
     &LIST_ORIG
 }
 
-fn iterate(cli_args: &Args) -> Vec<String> {
+fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
     let word_count = cli_args.word_count;
     let iterations = cli_args.num_of_pass;
     let diceware_map = choose_word_list(cli_args);
-    let mut list = Vec::<String>::new();
+    let mut list = Vec::<PassPhrase>::new();
     for _ in 0..iterations {
-        let mut passphrase = String::new();
+        let mut passphrase = PassPhrase::new();
         for _ in 0..word_count {
-            let lookup = roll_dice();
+            let lookup = roll_dice_5_times();
             let word = lookup_word(&lookup, diceware_map);
-            passphrase.push_str(&format!("{word} "));
+            passphrase.push(word);
         }
-        list.push(passphrase.trim().to_string())
+        list.push(passphrase)
+    }
+
+    if cli_args.use_special_char {
+        for pp in &mut list {
+            let ch = roll_for_special_char();
+            let _ = add_special_char(pp, ch).clone();
+        }
     }
 
     list
 }
 
-fn roll_dice() -> String {
+fn add_special_char(pp: &mut PassPhrase, ch: char) -> &PassPhrase {
+    let dice = Uniform::from(1..pp.len() as u32);
+    let mut rng = rand::thread_rng();
+    let idx_word = roll_dice(&dice, &mut rng);
+
+    let len_word = pp[idx_word].len();
+    let dice = Uniform::from(0..(len_word - 1) as u32);
+    let mut rng = rand::thread_rng();
+    let idx_char = roll_dice(&dice, &mut rng);
+
+    let word = &pp[idx_word];
+    let w1 = &word[0..idx_char];
+    let w2 = &word[idx_char..];
+    pp[idx_word] = format!("{w1}{ch}{w2}");
+
+    pp
+}
+
+fn roll_for_special_char() -> char {
+    let dice = Uniform::from(0..6);
+    let mut rng = rand::thread_rng();
+    let x = roll_dice(&dice, &mut rng);
+    let y = roll_dice(&dice, &mut rng);
+
+    SPECIAL_CHARS[x][y]
+}
+
+fn roll_dice_5_times() -> String {
     let mut lookup_number = String::new();
     let dice = Uniform::from(1..7);
     let mut rng = rand::thread_rng();
     for _ in 0..5 {
-        let number = dice.sample(&mut rng);
-        lookup_number.push(char::from_digit(number, 10).unwrap());
+        let number = roll_dice(&dice, &mut rng);
+        lookup_number.push(char::from_digit(number as u32, 10).unwrap());
     }
 
     lookup_number
+}
+
+fn roll_dice(dice: &Uniform<u32>, rng: &mut ThreadRng) -> usize {
+    dice.sample(rng) as usize
 }
 
 fn lookup_word(
@@ -82,7 +127,7 @@ mod tests {
 
     #[test]
     fn correct_digits() {
-        let lookup_num = roll_dice();
+        let lookup_num = roll_dice_5_times();
 
         assert_eq!(lookup_num.len(), 5, "The lookup number is 5 digits long");
 
@@ -120,10 +165,8 @@ mod tests {
 
         assert_eq!(list.len(), 6, "number of passphrases is {}", num_choices);
 
-        for l in list {
-            let list: Vec<&str> = l.split_whitespace().collect();
-
-            assert_eq!(list.len(), 5, "words in passphrase = {}", word_count);
+        for pp in list {
+            assert_eq!(pp.len(), 5, "words in passphrase = {}", word_count);
         }
     }
 
@@ -138,10 +181,8 @@ mod tests {
 
         assert_eq!(list.len(), 12, "number of passphrases is {}", num_choices);
 
-        for l in list {
-            let list: Vec<&str> = l.split_whitespace().collect();
-
-            assert_eq!(list.len(), 15, "words in passphrase = {}", word_count);
+        for pp in list {
+            assert_eq!(pp.len(), 15, "words in passphrase = {}", word_count);
         }
     }
 
@@ -166,6 +207,22 @@ mod tests {
             lookup_word("11111", map),
             "abacus",
             "when -e is used wordlist is the EFF one",
+        );
+    }
+
+    #[test]
+    fn special_char_handling() {
+        let num_choices = 1;
+        let mut cli_args = process_command_line();
+        cli_args.num_of_pass = num_choices;
+        let mut list = iterate(&cli_args);
+        let special_char = roll_for_special_char();
+        let new_pp = add_special_char(&mut list[0], special_char);
+
+        let output = format!("{}", new_pp);
+        assert!(
+            output.contains(special_char),
+            "the passphrase contains a special char"
         );
     }
 }
