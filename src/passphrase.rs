@@ -93,7 +93,10 @@ mod test {
             .push("chars")
             .push("l");
 
-        assert!(passphrase.is_insecure(), "passphrase is LESS THAN 19 chars");
+        assert!(
+            passphrase.is_insecure(),
+            "insecure: passphrase is LESS THAN 19 chars"
+        );
     }
 
     #[test]
@@ -107,7 +110,7 @@ mod test {
 
         assert!(
             passphrase.is_insecure(),
-            "I18N passphrase is LESS THAN 19 chars"
+            "insecure: I18N passphrase is LESS THAN 19 chars"
         );
     }
 

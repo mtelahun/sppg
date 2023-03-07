@@ -9,6 +9,8 @@ pub struct Args {
     pub num_of_pass: u8,
     #[arg(short, long, default_value_t = 5, value_parser = clap::value_parser!(u8).range(1..))]
     pub word_count: u8,
+    #[arg(short = 'c', long)]
+    pub use_capital_char: bool,
     #[arg(short = 's', long)]
     pub use_special_char: bool,
 }
@@ -124,5 +126,23 @@ mod test {
             .use_special_char;
 
         assert!(value, "Arg -s is set to true");
+    }
+
+    #[test]
+    fn verify_cli_arg_c_is_true01() {
+        let value = Args::try_parse_from(["sppg", "--use-capital-char"])
+            .expect("this command is supposed to work")
+            .use_capital_char;
+
+        assert!(value, "Arg --use-capital-char is set to true");
+    }
+
+    #[test]
+    fn verify_cli_arg_c_is_true02() {
+        let value = Args::try_parse_from(["sppg", "-c"])
+            .expect("this command is supposed to work")
+            .use_capital_char;
+
+        assert!(value, "Arg -c is set to true");
     }
 }
