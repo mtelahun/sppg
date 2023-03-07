@@ -37,7 +37,7 @@ fn main() {
 }
 
 fn choose_word_list(cli_args: &Args) -> &'static HashMap<&'static str, &'static str> {
-    if cli_args.eff_word_list {
+    if cli_args.eff {
         return &LIST_EFF;
     }
 
@@ -215,7 +215,7 @@ mod tests {
     #[test]
     fn choose_wordlist_eff() {
         let mut args = process_command_line();
-        args.eff_word_list = true;
+        args.eff = true;
         let map = choose_word_list(&args);
 
         assert_eq!(

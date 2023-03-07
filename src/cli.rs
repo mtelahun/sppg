@@ -4,7 +4,7 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     #[arg(short, long)]
-    pub eff_word_list: bool,
+    pub eff: bool,
     #[arg(short, long, default_value_t = 6, value_parser = clap::value_parser!(u8).range(1..))]
     pub num_of_pass: u8,
     #[arg(short, long, default_value_t = 5, value_parser = clap::value_parser!(u8).range(1..))]
@@ -94,16 +94,16 @@ mod test {
     fn verify_cli_arg_e_defaults_to_false() {
         let value = Args::try_parse_from(["sppg"])
             .expect("this command is supposed to work")
-            .eff_word_list;
+            .eff;
 
         assert!(!value, "default -e value is false");
     }
 
     #[test]
     fn verify_cli_arg_e_is_true() {
-        let value = Args::try_parse_from(["sppg", "--eff-word-list"])
+        let value = Args::try_parse_from(["sppg", "--eff"])
             .expect("this command is supposed to work")
-            .eff_word_list;
+            .eff;
 
         assert!(value, "Arg -e is set to true");
     }
