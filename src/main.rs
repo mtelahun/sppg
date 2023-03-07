@@ -10,16 +10,14 @@ use rand::{
 extern crate lazy_static;
 
 mod cli;
-mod eff_wordlist;
-mod original_wordlist;
 mod passphrase;
-mod special_char;
+mod wordlist;
 
 use crate::{
     cli::{process_command_line, Args},
-    eff_wordlist::EFF_WORDLIST,
-    original_wordlist::ORIGINAL_WORDLIST,
-    special_char::SPECIAL_CHARS,
+    wordlist::eff::EFF_WORDLIST,
+    wordlist::original::ORIGINAL_WORDLIST,
+    wordlist::special_char::SPECIAL_CHARS,
 };
 
 lazy_static! {
@@ -39,7 +37,7 @@ fn main() {
 }
 
 fn choose_word_list(cli_args: &Args) -> &'static HashMap<&'static str, &'static str> {
-    if cli_args.eff_word_list {
+    if cli_args.eff {
         return &LIST_EFF;
     }
 
@@ -68,6 +66,15 @@ fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
         eprintln!("error: try increasing the word count or adding a special character.");
     }
 
+    // This needs to be done before adding a special character so as to
+    // not run the risk of attempting to convert a special character
+    // to uppercase.
+    if cli_args.use_capital_char {
+        for pp in &mut list {
+            add_capital_char(pp);
+        }
+    }
+
     if cli_args.use_special_char {
         for pp in &mut list {
             let ch = roll_for_special_char();
@@ -91,6 +98,32 @@ fn add_special_char(pp: &mut PassPhrase, ch: char) -> &PassPhrase {
     let word = &pp[idx_word];
     let w1 = &word[0..idx_char];
     let w2 = &word[idx_char..];
+    pp[idx_word] = format!("{w1}{ch}{w2}");
+
+    pp
+}
+
+fn add_capital_char(pp: &mut PassPhrase) -> &PassPhrase {
+    let dice = Uniform::from(1..pp.len() as u32);
+    let mut rng = rand::thread_rng();
+    let idx_word = roll_dice(&dice, &mut rng);
+
+    let len_word = pp[idx_word].len();
+    let dice = Uniform::from(0..(len_word - 1) as u32);
+    let mut rng = rand::thread_rng();
+    let idx_char = roll_dice(&dice, &mut rng);
+
+    let mut ch = String::from("");
+    let word = &pp[idx_word];
+    for (idx, c) in word.char_indices() {
+        if idx == idx_char {
+            // We convert to string because for some languages to_uppercase() may
+            // return more than one char.
+            ch = c.to_uppercase().to_string();
+        }
+    }
+    let w1 = &word[0..idx_char];
+    let w2 = &word[idx_char + 1..];
     pp[idx_word] = format!("{w1}{ch}{w2}");
 
     pp
@@ -217,7 +250,7 @@ mod tests {
     #[test]
     fn choose_wordlist_eff() {
         let mut args = process_command_line();
-        args.eff_word_list = true;
+        args.eff = true;
         let map = choose_word_list(&args);
 
         assert_eq!(
@@ -229,9 +262,8 @@ mod tests {
 
     #[test]
     fn special_char_handling() {
-        let num_choices = 1;
         let mut cli_args = process_command_line();
-        cli_args.num_of_pass = num_choices;
+        cli_args.num_of_pass = 1;
         let mut list = iterate(&cli_args);
         let special_char = roll_for_special_char();
         let new_pp = add_special_char(&mut list[0], special_char);
@@ -253,5 +285,24 @@ mod tests {
         let list = iterate(&cli_args);
 
         assert_eq!(list.len(), 0, "list of passphrases is empty");
+    }
+
+    #[test]
+    fn capital_char_handling() {
+        let mut cli_args = process_command_line();
+        cli_args.num_of_pass = 1;
+        cli_args.use_capital_char = true;
+        let mut list = iterate(&cli_args);
+        let new_pp = add_capital_char(&mut list[0]);
+
+        let mut contains_capital = false;
+        let output = format!("{}", new_pp);
+        for (_, ch) in output.char_indices() {
+            if ch.is_uppercase() {
+                contains_capital = true;
+            }
+        }
+
+        assert!(contains_capital, "the passphrase contains a Capital letter");
     }
 }
