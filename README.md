@@ -26,9 +26,11 @@ Build
 -----
 From a terminal:
 1. Clone this repository
-`git clone https://github.com/mtelahun/sppg.git`
+
+```git clone https://github.com/mtelahun/sppg.git```
 2. Change into the cloned directory and type:
-`cargo run --release`
+
+```cargo run --release```
 
 Installation
 ------------
