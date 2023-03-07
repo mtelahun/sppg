@@ -2,6 +2,8 @@ use std::ops::{Index, IndexMut};
 
 const CHAR_COUNT_MIN: usize = 19;
 const WORD_COUNT_MIN: usize = 4;
+const QUALITY_CHAR_COUNT_MIN: usize = 8;
+const QUALITY_WORD_COUNT_MIN: usize = 2;
 
 #[derive(Clone, Debug)]
 pub struct PassPhrase {
@@ -26,7 +28,7 @@ impl PassPhrase {
     }
 
     pub fn is_insecure(&self) -> bool {
-        // Any thing less than 4 words is too insecure
+        // All lowercase with less than 4 words is insecure
         let word_count = self.len();
 
         // we should count the spaces between the words
@@ -34,6 +36,50 @@ impl PassPhrase {
         let mut char_length = 0;
         for word in &self.inner {
             char_length += word.chars().count();
+        }
+
+        // does the phrase have quality?
+        let mut quality = 0;
+        let mut uppercase = 0;
+        let mut special = 0;
+        let mut numeric = 0;
+        for word in &self.inner {
+            for ch in word.chars() {
+                // keep track of numbers separately because they
+                // appear in the regular and the special char lists
+                if ch.is_numeric() {
+                    numeric += 1;
+                }
+                if ch.is_ascii_punctuation() {
+                    special += 1;
+                }
+                if ch.is_uppercase() {
+                    uppercase += 1;
+                }
+            }
+        }
+        if uppercase > 0 {
+            quality += 1;
+        }
+        // A quality of 3 is necessary because numbers can appear in
+        // both the word list and the special char list. If there is
+        // not a number but there is at least one upper case and one
+        // special char then increase quality.
+        if numeric > 0 || (special > 0 && uppercase > 0) {
+            quality += 1;
+        }
+        // If there is no punctuation but there is at least one
+        // number and one capital letter then increase quality.
+        if special > 0 || (numeric > 0 && uppercase > 0) {
+            quality += 1;
+        }
+
+        if (QUALITY_WORD_COUNT_MIN..WORD_COUNT_MIN).contains(&word_count) {
+            if quality < 3 || (char_length + spaces) < QUALITY_CHAR_COUNT_MIN {
+                return true;
+            } else if quality >= 3 {
+                return false;
+            }
         }
 
         word_count < WORD_COUNT_MIN || (char_length + spaces) < CHAR_COUNT_MIN
@@ -123,5 +169,16 @@ mod test {
             .push("only_three_words");
 
         assert!(passphrase.is_insecure(), "passphrase is LESS THAN 4 words");
+    }
+
+    #[test]
+    fn short_with_quality() {
+        let mut passphrase = PassPhrase::new();
+        passphrase.push("!a").push("shortA");
+
+        assert!(
+            !passphrase.is_insecure(),
+            "passphrase is short but contains a capital and special char"
+        );
     }
 }
