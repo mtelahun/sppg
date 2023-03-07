@@ -56,6 +56,19 @@ fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
             let word = lookup_word(&lookup, diceware_map);
             passphrase.push(word);
         }
+
+        // This needs to be done before adding a special character so as to
+        // not run the risk of attempting to convert a special character
+        // to uppercase.
+        if cli_args.use_capital_char {
+            add_capital_char(&mut passphrase);
+        }
+
+        if cli_args.use_special_char {
+            let ch = roll_for_special_char();
+            let _ = add_special_char(&mut passphrase, ch).clone();
+        }
+
         if passphrase.is_insecure() {
             continue;
         }
@@ -63,23 +76,7 @@ fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
     }
     if list.is_empty() && iterations > 0 {
         eprintln!("error: unable to derive a secure enough passphrase");
-        eprintln!("error: try increasing the word count or adding a special character.");
-    }
-
-    // This needs to be done before adding a special character so as to
-    // not run the risk of attempting to convert a special character
-    // to uppercase.
-    if cli_args.use_capital_char {
-        for pp in &mut list {
-            add_capital_char(pp);
-        }
-    }
-
-    if cli_args.use_special_char {
-        for pp in &mut list {
-            let ch = roll_for_special_char();
-            let _ = add_special_char(pp, ch).clone();
-        }
+        eprintln!("error: try increasing the word count or adding quality (--quality).");
     }
 
     list
@@ -91,13 +88,16 @@ fn add_special_char(pp: &mut PassPhrase, ch: char) -> &PassPhrase {
     let idx_word = roll_dice(&dice, &mut rng);
 
     let len_word = pp[idx_word].len();
-    let dice = Uniform::from(0..(len_word - 1) as u32);
-    let mut rng = rand::thread_rng();
-    let idx_char = roll_dice(&dice, &mut rng);
+    let mut idx_char: usize = 0;
+    if len_word > 1 {
+        let dice = Uniform::from(0..len_word as u32);
+        let mut rng = rand::thread_rng();
+        idx_char = roll_dice(&dice, &mut rng);
+    }
 
     let word = &pp[idx_word];
-    let w1 = &word[0..idx_char];
-    let w2 = &word[idx_char..];
+    let w1 = &word[0..=idx_char];
+    let w2 = &word[idx_char + 1..];
     pp[idx_word] = format!("{w1}{ch}{w2}");
 
     pp
@@ -109,9 +109,12 @@ fn add_capital_char(pp: &mut PassPhrase) -> &PassPhrase {
     let idx_word = roll_dice(&dice, &mut rng);
 
     let len_word = pp[idx_word].len();
-    let dice = Uniform::from(0..(len_word - 1) as u32);
-    let mut rng = rand::thread_rng();
-    let idx_char = roll_dice(&dice, &mut rng);
+    let mut idx_char: usize = 0;
+    if len_word > 1 {
+        let dice = Uniform::from(0..len_word as u32);
+        let mut rng = rand::thread_rng();
+        idx_char = roll_dice(&dice, &mut rng);
+    }
 
     let mut ch = String::from("");
     let word = &pp[idx_word];
@@ -119,7 +122,9 @@ fn add_capital_char(pp: &mut PassPhrase) -> &PassPhrase {
         if idx == idx_char {
             // We convert to string because for some languages to_uppercase() may
             // return more than one char.
-            ch = c.to_uppercase().to_string();
+            if c.is_alphabetic() {
+                ch = c.to_uppercase().to_string();
+            }
         }
     }
     let w1 = &word[0..idx_char];
@@ -264,7 +269,9 @@ mod tests {
     fn special_char_handling() {
         let mut cli_args = process_command_line();
         cli_args.num_of_pass = 1;
+        cli_args.word_count = 7;
         let mut list = iterate(&cli_args);
+        assert!(!list.is_empty());
         let special_char = roll_for_special_char();
         let new_pp = add_special_char(&mut list[0], special_char);
 
@@ -291,8 +298,12 @@ mod tests {
     fn capital_char_handling() {
         let mut cli_args = process_command_line();
         cli_args.num_of_pass = 1;
+        cli_args.word_count = 6;
         cli_args.use_capital_char = true;
         let mut list = iterate(&cli_args);
+        while list.is_empty() {
+            list = iterate(&cli_args);
+        }
         let new_pp = add_capital_char(&mut list[0]);
 
         let mut contains_capital = false;
@@ -304,5 +315,39 @@ mod tests {
         }
 
         assert!(contains_capital, "the passphrase contains a Capital letter");
+    }
+
+    #[test]
+    fn quality_for_short_phrases() {
+        let mut cli_args = process_command_line();
+        cli_args.num_of_pass = 1;
+        cli_args.use_capital_char = true;
+        cli_args.use_special_char = true;
+        cli_args.word_count = 2;
+        let mut list = iterate(&cli_args);
+        while list.is_empty() {
+            list = iterate(&cli_args);
+        }
+        let pp = &list[0];
+
+        // contains capital
+        let mut contains_capital = false;
+        let output = format!("{}", pp);
+        for (_, ch) in output.char_indices() {
+            if ch.is_uppercase() {
+                contains_capital = true;
+            }
+        }
+        assert!(contains_capital, "the passphrase contains a Capital letter");
+
+        // contains special char
+        let mut contains_special = false;
+        let output = format!("{}", pp);
+        for (_, ch) in output.char_indices() {
+            if ch.is_numeric() || ch.is_ascii_punctuation() {
+                contains_special = true;
+            }
+        }
+        assert!(contains_special, "the passphrase contains a special char");
     }
 }

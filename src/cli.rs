@@ -9,10 +9,12 @@ pub struct Args {
     pub num_of_pass: u8,
     #[arg(short, long, default_value_t = 5, value_parser = clap::value_parser!(u8).range(1..))]
     pub word_count: u8,
-    #[arg(short = 'c', long)]
+    #[arg(short = 'c', long, default_value_if("quality", "true", Some("true")))]
     pub use_capital_char: bool,
-    #[arg(short = 's', long)]
+    #[arg(short = 's', long, default_value_if("quality", "true", Some("true")))]
     pub use_special_char: bool,
+    #[arg(short, long)]
+    pub quality: bool,
 }
 
 pub fn process_command_line() -> Args {
@@ -144,5 +146,36 @@ mod test {
             .use_capital_char;
 
         assert!(value, "Arg -c is set to true");
+    }
+
+    #[test]
+    fn verify_cli_arg_q_is_true01() {
+        let value = Args::try_parse_from(["sppg", "--quality"])
+            .expect("this command is supposed to work")
+            .quality;
+
+        assert!(value, "Arg --quality is set to true");
+    }
+
+    #[test]
+    fn verify_cli_arg_q_is_true02() {
+        let value = Args::try_parse_from(["sppg", "-q"])
+            .expect("this command is supposed to work")
+            .quality;
+
+        assert!(value, "Arg -q is set to true");
+    }
+
+    #[test]
+    fn verify_cli_arg_q_implies_c_s() {
+        let value_cap = Args::try_parse_from(["sppg", "-q"])
+            .expect("this command is supposed to work")
+            .use_capital_char;
+        let value_special = Args::try_parse_from(["sppg", "-q"])
+            .expect("this command is supposed to work")
+            .use_special_char;
+
+        assert!(value_cap, "Arg -q implies -c");
+        assert!(value_special, "Arg -q implies -s");
     }
 }
