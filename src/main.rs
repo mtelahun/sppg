@@ -10,16 +10,14 @@ use rand::{
 extern crate lazy_static;
 
 mod cli;
-mod eff_wordlist;
-mod original_wordlist;
 mod passphrase;
-mod special_char;
+mod wordlist;
 
 use crate::{
     cli::{process_command_line, Args},
-    eff_wordlist::EFF_WORDLIST,
-    original_wordlist::ORIGINAL_WORDLIST,
-    special_char::SPECIAL_CHARS,
+    wordlist::eff::EFF_WORDLIST,
+    wordlist::original::ORIGINAL_WORDLIST,
+    wordlist::special_char::SPECIAL_CHARS,
 };
 
 lazy_static! {
