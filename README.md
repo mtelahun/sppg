@@ -5,16 +5,47 @@
 
 Secure passphrase generator using the diceware method.
 
-For a long time I've relied on `apg`, a random password generator that generates pronounceable random passwords, to create my passwords for me. I've been happy with it so far but there are a few problems with using it.
-1. I've found that my limit for secure password that I can memorize in a reasonable amount of time is about 12 characters
-2. I can't remember more than a couple of these secure passwords without writing them down somewhere
-3. Since it takes time to memorize a new password I am loathe to change a password once I memorize it
+For a long time the [`apg`](https://github.com/jabenninghoff/apg) command line program has allowed users to create random, pronounceable passwords that are also hard to guess. This program attempts to do the same thing for pass phrases.
 
-None of these problems is the fault of the program. I've gotten around them by using a password manager for every app or site that requires a password. I let the password manager generate a secure, utterly un-memorizable password and just let the password manager enter it for me automatically whenever I need it. Since my password manager has a browser extention, a mobile app, and a desktop app I can be reasonably certain that I will have access to my passwords almost anywhere I may be. This leaves me with only 2 passwords to remember that aren't written down anywhere: my desktop password and the master password for my password manager. This compromise has worked out reasonably well for me so far. This leaves me with only one last problem, rotating my passwords. In addition, since I now store all my passwords in the password manager my master password should probably be more secure than a random twelve char password. 
+It uses the [diceware](https://theworld.com/~reinhold/diceware.html) method to derive random passphrases and takes some precautions to ensure that all the phrases it displays are as secure as possible within the confines of the user's request. By default it outputs a 5 word passphrase and won't output anything with less than 4 words unless you specify the quality option (-q | --quality). However, even with the quality option it won't display any phrases with less than 8 characters (including spaces).
 
-Enter [diceware](https://theworld.com/~reinhold/diceware.html). Diceware is a method for generating very secure yet easily memorizable passwords. The apeal for me is that it allows me to remove all the things that make remembering a password difficult for me: special characters and upper case letters. Now my passwords can just be 4 or 5 easily memorizable lower case words. I just needed to tackle one more problem. I need a command line program to generate them for me. That tools is sppg.
+Pre-requisites
+--------------
+1. Git source code versioning system
+`https://git-scm.com/book/en/v2/Getting-Started-Installing-Git`
+2. Rust programming language [Office install guide](https://www.rust-lang.org/tools/install)
+`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
-#Installation
+To insure it was installed correctly type the following commands and make sure you get a successful output:
+```
+rustc --version
+cargo --version
+```
 
-#Usage
+Build
+-----
+From a terminal:
+1. Clone this repository
+`git clone https://github.com/mtelahun/sppg.git`
+2. Change into the cloned directory and type:
+`cargo run --release`
 
+Installation
+------------
+It currently does not have any installation scripts so you have to copy it manually to a directory in your PATH.
+
+Use
+---
+```
+Usage: sppg [OPTIONS]
+
+Options:
+  -e, --eff                        
+  -n, --num-of-pass <NUM_OF_PASS>  \[default: 6\]
+  -w, --word-count <WORD_COUNT>    \[default: 5\]
+  -c, --use-capital-char           
+  -s, --use-special-char           
+  -q, --quality                    Implies -c and -s
+  -h, --help                       Print help
+  -V, --version                    Print version
+```
