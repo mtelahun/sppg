@@ -2,7 +2,12 @@
 name = "sppg"
 version = "0.1.0"
 edition = "2021"
-
+license = "BSD-2-Clause"
+description = "CLI passphrase generator using the diceware method"
+repository = "https://github.com/mtelahun/sppg"
+readme = "README.md"
+keywords = ["cli", "password", "passphrase", "passphrase-generator", "diceware"]
+categories = ["command-line-utilities", "cryptography"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
