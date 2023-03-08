@@ -54,7 +54,9 @@ From a terminal:
 
 Installation
 ------------
-It currently does not have any installation scripts so you have to copy it manually to a directory in your `PATH`.
+To install this package switch to the root of repository directory and type:
+
+`cargo install --path .`
 
 Use
 ---
