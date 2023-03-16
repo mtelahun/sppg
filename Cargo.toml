@@ -1,6 +1,6 @@
 [package]
 name = "sppg"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 license = "BSD-2-Clause"
 description = "CLI passphrase generator using the diceware method"

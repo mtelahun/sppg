@@ -83,7 +83,7 @@ fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
 }
 
 fn add_special_char(pp: &mut PassPhrase, ch: char) -> &PassPhrase {
-    let dice = Uniform::from(1..pp.len() as u32);
+    let dice = Uniform::from(0..pp.len() as u32);
     let mut rng = rand::thread_rng();
     let idx_word = roll_dice(&dice, &mut rng);
 
@@ -95,16 +95,21 @@ fn add_special_char(pp: &mut PassPhrase, ch: char) -> &PassPhrase {
         idx_char = roll_dice(&dice, &mut rng);
     }
 
-    let word = &pp[idx_word];
-    let w1 = &word[0..=idx_char];
-    let w2 = &word[idx_char + 1..];
-    pp[idx_word] = format!("{w1}{ch}{w2}");
+    if idx_char == 0 {
+        let w1 = &pp[idx_word][..len_word];
+        pp[idx_word] = format!("{ch}{w1}");
+    } else {
+        let word = &pp[idx_word];
+        let w1 = &word[0..=idx_char];
+        let w2 = &word[idx_char + 1..];
+        pp[idx_word] = format!("{w1}{ch}{w2}");
+    }
 
     pp
 }
 
 fn add_capital_char(pp: &mut PassPhrase) -> &PassPhrase {
-    let dice = Uniform::from(1..pp.len() as u32);
+    let dice = Uniform::from(0..pp.len() as u32);
     let mut rng = rand::thread_rng();
     let idx_word = roll_dice(&dice, &mut rng);
 
@@ -296,14 +301,11 @@ mod tests {
 
     #[test]
     fn capital_char_handling() {
-        let mut cli_args = process_command_line();
-        cli_args.num_of_pass = 1;
-        cli_args.word_count = 6;
-        cli_args.use_capital_char = true;
-        let mut list = iterate(&cli_args);
-        while list.is_empty() {
-            list = iterate(&cli_args);
-        }
+        let mut pp = PassPhrase::new();
+        pp.push("some");
+        pp.push("phrase");
+        let mut list = Vec::<PassPhrase>::new();
+        list.push(pp);
         let new_pp = add_capital_char(&mut list[0]);
 
         let mut contains_capital = false;
@@ -349,5 +351,87 @@ mod tests {
             }
         }
         assert!(contains_special, "the passphrase contains a special char");
+    }
+
+    #[test]
+    fn special_char_in_first_word() {
+        let mut pp = PassPhrase::new();
+        pp.push("some");
+        pp.push("phrase");
+        let mut list = Vec::<PassPhrase>::new();
+        list.push(pp);
+        let mut contains_special_char = false;
+        // assume 500 tries is enough to get at least one special char in the first word
+        for _ in 0..500 {
+            // Wordlist contains numbers so skip them to avoid false positives
+            let mut ch = roll_for_special_char();
+            while ch >= '0' && ch <= '9' {
+                ch = roll_for_special_char();
+            }
+            let new_pp = add_special_char(&mut list[0], ch);
+
+            let output = new_pp[0].clone();
+            for (_, ch) in output.char_indices() {
+                if ch.is_ascii_punctuation() {
+                    contains_special_char = true;
+                }
+            }
+        }
+
+        assert!(
+            contains_special_char,
+            "the first word in the passphrase contains a special char"
+        );
+    }
+
+    #[test]
+    fn special_char_in_first_character() {
+        let mut pp = PassPhrase::new();
+        pp.push("some");
+        pp.push("phrase");
+        let mut list = Vec::<PassPhrase>::new();
+        list.push(pp);
+        let mut contains_special_char = false;
+        // assume 500 tries is enough to get at least one special char in the first word
+        for _ in 0..500 {
+            let ch = '*';
+            let new_pp = add_special_char(&mut list[0], ch);
+
+            let output = new_pp[0].clone();
+            if output[0..1] == ch.to_string() {
+                contains_special_char = true;
+            }
+        }
+
+        assert!(
+            contains_special_char,
+            "the first character in a word is a special char"
+        );
+    }
+
+    #[test]
+    fn capital_in_first_word() {
+        let mut pp = PassPhrase::new();
+        pp.push("some");
+        pp.push("phrase");
+        let mut list = Vec::<PassPhrase>::new();
+        list.push(pp);
+        let mut contains_special_char = false;
+        // assume 500 tries is enough to get at least one special char in the first word
+        for _ in 0..500 {
+            let new_pp = add_capital_char(&mut list[0]);
+
+            let output = new_pp[0].clone();
+            for (_, ch) in output.char_indices() {
+                if ch.is_uppercase() {
+                    contains_special_char = true;
+                }
+            }
+        }
+
+        assert!(
+            contains_special_char,
+            "the first word in the passphrase contains a capital letter"
+        );
     }
 }
