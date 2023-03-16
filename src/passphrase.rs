@@ -21,6 +21,10 @@ impl PassPhrase {
         self.inner.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn push(&mut self, word: &str) -> &mut Self {
         self.inner.push(word.into());
 
@@ -83,6 +87,12 @@ impl PassPhrase {
         }
 
         word_count < WORD_COUNT_MIN || (char_length + spaces) < CHAR_COUNT_MIN
+    }
+}
+
+impl Default for PassPhrase {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -180,5 +190,18 @@ mod test {
             !passphrase.is_insecure(),
             "passphrase is short but contains a capital and special char"
         );
+    }
+
+    #[test]
+    fn default_impl() {
+        #[derive(Default)]
+        struct TestStruct {
+            pp: PassPhrase,
+        }
+        let s = TestStruct {
+            ..Default::default()
+        };
+
+        assert!(s.pp.is_empty());
     }
 }
