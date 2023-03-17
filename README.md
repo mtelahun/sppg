@@ -23,7 +23,7 @@ A Note about security
 
     `sppg -w 4`
 
-- These resources [offer](https://xkcd.com/936/) [further]((https://palant.info/2023/01/30/password-strength-explained/)) [information](https://proton.me/blog/protonmail-com-blog-password-vs-passphrase) on the subject of passphrase security.
+- These resources [offer](https://xkcd.com/936/) [further](https://palant.info/2023/01/30/password-strength-explained/) [information](https://proton.me/blog/protonmail-com-blog-password-vs-passphrase) on the subject of passphrase security.
 
 Pre-requisites
 --------------
