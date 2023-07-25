@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::ops::{Index, IndexMut};
 
 const CHAR_COUNT_MIN: usize = 19;
@@ -7,12 +8,15 @@ const QUALITY_WORD_COUNT_MIN: usize = 2;
 
 #[derive(Clone, Debug)]
 pub struct PassPhrase {
+    separator: char,
     inner: Vec<String>,
 }
 
 impl PassPhrase {
-    pub fn new() -> Self {
+    pub fn new(sep: Option<char>) -> Self {
+        let separator = sep.unwrap_or(' ');
         Self {
+            separator,
             inner: Vec::<String>::new(),
         }
     }
@@ -92,17 +96,14 @@ impl PassPhrase {
 
 impl Default for PassPhrase {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
 impl std::fmt::Display for PassPhrase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut pp = String::new();
-        for word in &self.inner {
-            pp.push_str(&format!("{word} "));
-        }
-        let pp = pp.trim();
+        let separator = &self.separator.to_string();
+        let pp = self.inner.iter().format(separator);
 
         write!(f, "{}", pp)
     }
@@ -128,7 +129,7 @@ mod test {
 
     #[test]
     fn test_is_insecure19() {
-        let mut passphrase = PassPhrase::new();
+        let mut passphrase = PassPhrase::new(None);
         passphrase
             .push("this")
             .push("is")
@@ -141,7 +142,7 @@ mod test {
 
     #[test]
     fn test_is_insecure18() {
-        let mut passphrase = PassPhrase::new();
+        let mut passphrase = PassPhrase::new(None);
         passphrase
             .push("this")
             .push("is")
@@ -157,7 +158,7 @@ mod test {
 
     #[test]
     fn test_is_insecure_i18n() {
-        let mut passphrase = PassPhrase::new();
+        let mut passphrase = PassPhrase::new(None);
         passphrase
             .push("1")
             .push("2")
@@ -172,7 +173,7 @@ mod test {
 
     #[test]
     fn test_is_insecure_words3() {
-        let mut passphrase = PassPhrase::new();
+        let mut passphrase = PassPhrase::new(None);
         passphrase
             .push("this_is_longer_than")
             .push("19_chars_but_it_is")
@@ -183,7 +184,7 @@ mod test {
 
     #[test]
     fn short_with_quality() {
-        let mut passphrase = PassPhrase::new();
+        let mut passphrase = PassPhrase::new(None);
         passphrase.push("!a").push("shortA");
 
         assert!(

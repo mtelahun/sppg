@@ -12,7 +12,7 @@ It uses the [diceware](https://theworld.com/~reinhold/diceware.html) method to d
 A Note about security
 ---
 - A four word passphrase should suffice for the average computer user. A five or six word passphrase will suffice for someone who's position in their organization might make them a legitimate target to compromise. If your threat model includes adversaries who can dedicate a large amount of money and resources against you the length of your passphrase is the least of your worries.
-- This program includes the spaces between words in determining the length of a passphrase. You should also include them when you type your passphrase. Theoretically, it is possible for an adversary to guess the number and length of the words in your passphrase by listening for the sound of the space bar, but if that is a realistic part of your theat model why are you even reading this?
+- ~~This program includes the spaces between words in determining the length of a passphrase. You should also include them when you type your passphrase. Theoretically, it is possible for an adversary to guess the number and length of the words in your passphrase by listening for the sound of the space bar, but if that is a realistic part of your theat model why are you even reading this?~~ The `-S` option can now be used to supply your own separator character.
 - This program uses the original word list from Arnold Reinhold by default. However, there is an option to use the EFF's revised list. Both lists are exactly the same security-wise. The difference is in the words included in the list. The EFF's list includes longer words, removes some Americanisms, and removes a broader range of potentially offensive words. My personal preference is for the original list because it's shorter to type on average.
 - If you want shorter passphrases you can use the `--quality` option to insert one special character and convert one letter to upper case at random.
 
@@ -70,6 +70,7 @@ Options:
   -c, --use-capital-char           Convert one letter at random to uppercase
   -s, --use-special-char           Insert one special character at random
   -q, --quality                    Implies -c and -s
+  -S, --separator <SEPARATOR>      Use SEPARATOR (instead of ' ') to separate words
   -h, --help                       Print help
   -V, --version                    Print version
 ```
