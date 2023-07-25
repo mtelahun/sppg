@@ -130,7 +130,7 @@ fn no_insecure_passphrases() {
 
 #[test]
 fn capital_char_handling() {
-    let mut pp = PassPhrase::new();
+    let mut pp = PassPhrase::new(None);
     pp.push("some");
     pp.push("phrase");
     let mut list = Vec::<PassPhrase>::new();
@@ -184,7 +184,7 @@ fn quality_for_short_phrases() {
 
 #[test]
 fn special_char_in_first_word() {
-    let mut pp = PassPhrase::new();
+    let mut pp = PassPhrase::new(None);
     pp.push("some");
     pp.push("phrase");
     let mut list = Vec::<PassPhrase>::new();
@@ -215,7 +215,7 @@ fn special_char_in_first_word() {
 
 #[test]
 fn special_char_in_first_character() {
-    let mut pp = PassPhrase::new();
+    let mut pp = PassPhrase::new(None);
     pp.push("some");
     pp.push("phrase");
     let mut list = Vec::<PassPhrase>::new();
@@ -240,7 +240,7 @@ fn special_char_in_first_character() {
 
 #[test]
 fn capital_in_first_word() {
-    let mut pp = PassPhrase::new();
+    let mut pp = PassPhrase::new(None);
     pp.push("some");
     pp.push("phrase");
     let mut list = Vec::<PassPhrase>::new();
@@ -266,12 +266,35 @@ fn capital_in_first_word() {
 
 #[test]
 fn printed_correctly() {
-    let mut pp = PassPhrase::new();
+    let mut pp = PassPhrase::new(None);
     pp.push("some");
     pp.push("phrase");
     let mut list = Vec::<PassPhrase>::new();
     list.push(pp);
     print_passphrases(&list);
 
-    assert!(1 == 1);
+    assert_eq!(1, 1);
+}
+
+#[test]
+fn default_separator_char_is_space() {
+    let mut pp = PassPhrase::new(None);
+    pp.push("some");
+    pp.push("phrase");
+    let display = format!("{}", pp);
+
+    assert_eq!(
+        display, "some phrase",
+        "the default separator must be a space"
+    )
+}
+
+#[test]
+fn separator_char_in_output() {
+    let mut pp = PassPhrase::new(Some('-'));
+    pp.push("some");
+    pp.push("phrase");
+    let display = format!("{}", pp);
+
+    assert_eq!(display, "some-phrase", "the separator '-' is displayed")
 }

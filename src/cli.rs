@@ -15,6 +15,8 @@ pub struct Args {
     pub use_special_char: bool,
     #[arg(short, long)]
     pub quality: bool,
+    #[arg(short = 'S', long)]
+    pub separator: Option<char>,
 }
 
 pub fn process_command_line() -> Args {
@@ -177,5 +179,23 @@ mod test {
 
         assert!(value_cap, "Arg -q implies -c");
         assert!(value_special, "Arg -q implies -s");
+    }
+
+    #[test]
+    fn verify_cli_arg_separator_is_true02() {
+        let value = Args::try_parse_from(["sppg", "-S", "-"])
+            .expect("failed to parse -S argument")
+            .separator;
+
+        assert_eq!(value, Some('-'), "Arg -S is set to ' '");
+    }
+
+    #[test]
+    fn verify_cli_arg_separator_is_true01() {
+        let value = Args::try_parse_from(["sppg", "--separator", "-"])
+            .expect("failed to parse --separater argument")
+            .separator;
+
+        assert_eq!(value, Some('-'), "Arg --separator is set to ' '");
     }
 }

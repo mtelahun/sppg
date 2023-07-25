@@ -31,12 +31,13 @@ pub fn choose_word_list(cli_args: &Args) -> &'static HashMap<&'static str, &'sta
 }
 
 pub fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
+    let separator = cli_args.separator;
     let word_count = cli_args.word_count;
     let iterations = cli_args.num_of_pass;
     let diceware_map = choose_word_list(cli_args);
     let mut list = Vec::<PassPhrase>::new();
     for _ in 0..iterations {
-        let mut passphrase = PassPhrase::new();
+        let mut passphrase = PassPhrase::new(separator);
         for _ in 0..word_count {
             let lookup = roll_dice_5_times();
             let word = lookup_word(&lookup, diceware_map);
