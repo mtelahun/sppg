@@ -14,4 +14,4 @@ categories = ["command-line-utilities", "cryptography"]
 clap = { version = "4.1.8", features = ["derive"] }
 itertools = "0.13.0"
 lazy_static = "1.4.0"
-rand = "0.8.5"
+rand = "0.9.3"
