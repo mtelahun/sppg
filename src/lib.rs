@@ -3,8 +3,6 @@ use rand::{
     rngs::ThreadRng,
     seq::SliceRandom,
 };
-use std::collections::HashMap;
-
 pub mod cli;
 pub mod passphrase;
 mod wordlist;
@@ -12,32 +10,23 @@ use cli::Args;
 use passphrase::PassPhrase;
 use wordlist::{eff::EFF_WORDLIST, original::ORIGINAL_WORDLIST, special_char::SPECIAL_CHARS};
 
-#[macro_use]
-extern crate lazy_static;
-
 const MAX_ATTEMPTS_PER_PASSPHRASE: usize = 1000;
 
-lazy_static! {
-    static ref LIST_ORIG: HashMap<&'static str, &'static str> =
-        ORIGINAL_WORDLIST.into_iter().collect();
-}
-lazy_static! {
-    static ref LIST_EFF: HashMap<&'static str, &'static str> = EFF_WORDLIST.into_iter().collect();
-}
+pub type WordList = [(&'static str, &'static str); 7776];
 
-pub fn choose_word_list(cli_args: &Args) -> &'static HashMap<&'static str, &'static str> {
+pub fn choose_word_list(cli_args: &Args) -> &'static WordList {
     if cli_args.eff {
-        return &LIST_EFF;
+        return &EFF_WORDLIST;
     }
 
-    &LIST_ORIG
+    &ORIGINAL_WORDLIST
 }
 
 pub fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
     let separator = cli_args.separator;
     let word_count = cli_args.word_count;
     let iterations = cli_args.num_of_pass;
-    let diceware_map = choose_word_list(cli_args);
+    let word_list = choose_word_list(cli_args);
     let mut list = Vec::<PassPhrase>::new();
     // Retry insecure rolls so the user gets the count they asked for; the cap
     // stops settings that can never pass (e.g. -w 3 without -q) from looping forever.
@@ -48,7 +37,7 @@ pub fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
         let mut passphrase = PassPhrase::new(separator);
         for _ in 0..word_count {
             let lookup = roll_dice_5_times();
-            let word = lookup_word(&lookup, diceware_map);
+            let word = lookup_word(&lookup, word_list);
             passphrase.push(word);
         }
 
@@ -146,15 +135,32 @@ fn roll_dice(dice: &Uniform<u32>, rng: &mut ThreadRng) -> usize {
     dice.sample(rng) as usize
 }
 
-pub fn lookup_word(
-    lookup: &str,
-    diceware_map: &'static HashMap<&'static str, &'static str>,
-) -> &'static str {
-    diceware_map.get(lookup).unwrap()
+pub fn lookup_word(lookup: &str, word_list: &'static WordList) -> &'static str {
+    // Lists are sorted by dice number, so "11111".."66666" is base 6 with digits 1-6.
+    let idx = lookup
+        .bytes()
+        .fold(0, |acc, d| acc * 6 + d.wrapping_sub(b'1') as usize);
+    let (key, word) = word_list[idx];
+    assert_eq!(key, lookup, "invalid dice roll");
+    word
 }
 
 pub fn print_passphrases(list: &Vec<PassPhrase>) {
     for l in list {
         println!("{l}");
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn every_entry_found_by_its_dice_number() {
+        for list in [&ORIGINAL_WORDLIST, &EFF_WORDLIST] {
+            for (key, word) in list.iter() {
+                assert_eq!(lookup_word(key, list), *word);
+            }
+        }
     }
 }
