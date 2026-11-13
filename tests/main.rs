@@ -24,9 +24,9 @@ fn lookup_number_retrieves_word() {
     let cases = [("11111", "a"), ("36355", "levi"), ("66666", "\"@")];
 
     let cli_args = default_args();
-    let diceware_map = choose_word_list(&cli_args);
+    let word_list = choose_word_list(&cli_args);
     for (index, expected) in cases {
-        let word = lookup_word(index, diceware_map);
+        let word = lookup_word(index, word_list);
         assert_eq!(
             word, expected,
             "lookup index {}, expected {}",
