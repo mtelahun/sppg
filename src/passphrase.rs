@@ -40,7 +40,7 @@ impl PassPhrase {
         let word_count = self.len();
 
         // we should count the spaces between the words
-        let spaces = self.len() - 1;
+        let spaces = self.len().saturating_sub(1);
         let mut char_length = 0;
         for word in &self.inner {
             char_length += word.chars().count();
@@ -191,6 +191,11 @@ mod test {
             !passphrase.is_insecure(),
             "passphrase is short but contains a capital and special char"
         );
+    }
+
+    #[test]
+    fn empty_is_insecure_without_panic() {
+        assert!(PassPhrase::new(None).is_insecure());
     }
 
     #[test]
