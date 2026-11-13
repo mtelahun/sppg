@@ -75,23 +75,15 @@ pub fn add_special_char(pp: &mut PassPhrase, ch: char) -> &PassPhrase {
     let mut rng = rand::thread_rng();
     let idx_word = roll_dice(&dice, &mut rng);
 
-    let len_word = pp[idx_word].len();
-    let mut idx_char: usize = 0;
-    if len_word > 1 {
-        let dice = Uniform::from(0..len_word as u32);
-        let mut rng = rand::thread_rng();
-        idx_char = roll_dice(&dice, &mut rng);
-    }
-
-    if idx_char == 0 {
-        let w1 = &pp[idx_word][..len_word];
-        pp[idx_word] = format!("{ch}{w1}");
-    } else {
-        let word = &pp[idx_word];
-        let w1 = &word[0..=idx_char];
-        let w2 = &word[idx_char + 1..];
-        pp[idx_word] = format!("{w1}{ch}{w2}");
-    }
+    // Every gap is a candidate: before the word, between any two chars, after it.
+    let word = &pp[idx_word];
+    let gaps: Vec<usize> = word
+        .char_indices()
+        .map(|(i, _)| i)
+        .chain([word.len()])
+        .collect();
+    let at = *gaps.choose(&mut rng).unwrap(); // never empty: always holds word.len()
+    pp[idx_word] = format!("{}{ch}{}", &word[..at], &word[at..]);
 
     pp
 }

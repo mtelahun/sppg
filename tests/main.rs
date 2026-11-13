@@ -323,3 +323,20 @@ fn capital_char_never_drops_non_letters() {
     add_capital_char(&mut pp);
     assert_eq!(pp.to_string(), "10 !");
 }
+
+#[test]
+fn special_char_can_land_in_every_gap() {
+    // "abc" has 4 gaps; all must be reachable, including between 'a' and 'b'.
+    let mut seen = std::collections::HashSet::new();
+    for _ in 0..1000 {
+        let mut pp = PassPhrase::new(None);
+        pp.push("abc");
+        add_special_char(&mut pp, '!');
+        seen.insert(pp.to_string());
+    }
+    let expected: std::collections::HashSet<String> = ["!abc", "a!bc", "ab!c", "abc!"]
+        .into_iter()
+        .map(String::from)
+        .collect();
+    assert_eq!(seen, expected);
+}
