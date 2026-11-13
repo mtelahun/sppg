@@ -15,6 +15,8 @@ use wordlist::{eff::EFF_WORDLIST, original::ORIGINAL_WORDLIST, special_char::SPE
 #[macro_use]
 extern crate lazy_static;
 
+const MAX_ATTEMPTS_PER_PASSPHRASE: usize = 1000;
+
 lazy_static! {
     static ref LIST_ORIG: HashMap<&'static str, &'static str> =
         ORIGINAL_WORDLIST.into_iter().collect();
@@ -37,7 +39,12 @@ pub fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
     let iterations = cli_args.num_of_pass;
     let diceware_map = choose_word_list(cli_args);
     let mut list = Vec::<PassPhrase>::new();
-    for _ in 0..iterations {
+    // Retry insecure rolls so the user gets the count they asked for; the cap
+    // stops settings that can never pass (e.g. -w 3 without -q) from looping forever.
+    let max_attempts = iterations as usize * MAX_ATTEMPTS_PER_PASSPHRASE;
+    let mut attempts = 0;
+    while list.len() < iterations as usize && attempts < max_attempts {
+        attempts += 1;
         let mut passphrase = PassPhrase::new(separator);
         for _ in 0..word_count {
             let lookup = roll_dice_5_times();
@@ -54,7 +61,7 @@ pub fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
 
         if cli_args.use_special_char {
             let ch = roll_for_special_char();
-            let _ = add_special_char(&mut passphrase, ch).clone();
+            add_special_char(&mut passphrase, ch);
         }
 
         if passphrase.is_insecure() {
@@ -62,7 +69,7 @@ pub fn iterate(cli_args: &Args) -> Vec<PassPhrase> {
         }
         list.push(passphrase)
     }
-    if list.is_empty() && iterations > 0 {
+    if list.len() < iterations as usize {
         eprintln!("error: unable to derive a secure enough passphrase");
         eprintln!("error: try increasing the word count or adding quality (--quality).");
     }

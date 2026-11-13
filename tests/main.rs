@@ -1,3 +1,4 @@
+use clap::Parser;
 use sppg::{
     add_capital_char, add_special_char, choose_word_list, cli::process_command_line, iterate,
     lookup_word, passphrase::PassPhrase, print_passphrases, roll_dice_5_times,
@@ -339,4 +340,22 @@ fn special_char_can_land_in_every_gap() {
         .map(String::from)
         .collect();
     assert_eq!(seen, expected);
+}
+
+#[test]
+fn iterate_returns_requested_count() {
+    // 4 words often fall under the 19-char minimum; those must be re-rolled, not dropped.
+    let cli_args = sppg::cli::Args::try_parse_from(["sppg", "-w", "4", "-n", "50"]).unwrap();
+    assert_eq!(iterate(&cli_args).len(), 50);
+}
+
+#[test]
+fn impossible_settings_exit_with_error() {
+    // 3 words without --quality can never pass the security check.
+    let status = std::process::Command::new(env!("CARGO_BIN_EXE_sppg"))
+        .args(["-w", "3", "-n", "1"])
+        .output()
+        .unwrap()
+        .status;
+    assert!(!status.success());
 }
