@@ -298,3 +298,28 @@ fn separator_char_in_output() {
 
     assert_eq!(display, "some-phrase", "the separator '-' is displayed")
 }
+
+#[test]
+fn capital_char_never_drops_non_letters() {
+    // Words with digits/punctuation (as in the original diceware list) must keep
+    // every character; only one lowercase letter gets uppercased.
+    for _ in 0..500 {
+        let mut pp = PassPhrase::new(None);
+        pp.push("10").push("!").push("a&p").push("t-shirt");
+        add_capital_char(&mut pp);
+
+        let out = pp.to_string();
+        assert_eq!(
+            out.to_lowercase(),
+            "10 ! a&p t-shirt",
+            "no character was lost"
+        );
+        assert_eq!(out.chars().filter(|c| c.is_uppercase()).count(), 1);
+    }
+
+    // No letters at all: passphrase is left unchanged.
+    let mut pp = PassPhrase::new(None);
+    pp.push("10").push("!");
+    add_capital_char(&mut pp);
+    assert_eq!(pp.to_string(), "10 !");
+}

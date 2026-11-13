@@ -1,6 +1,7 @@
 use rand::{
     distributions::{Distribution, Uniform},
     rngs::ThreadRng,
+    seq::SliceRandom,
 };
 use std::collections::HashMap;
 
@@ -96,32 +97,27 @@ pub fn add_special_char(pp: &mut PassPhrase, ch: char) -> &PassPhrase {
 }
 
 pub fn add_capital_char(pp: &mut PassPhrase) -> &PassPhrase {
-    let dice = Uniform::from(0..pp.len() as u32);
-    let mut rng = rand::thread_rng();
-    let idx_word = roll_dice(&dice, &mut rng);
+    // Pick only among lowercase letters so digits/punctuation are never dropped.
+    let candidates: Vec<(usize, usize, char)> = (0..pp.len())
+        .flat_map(|w| {
+            pp[w]
+                .char_indices()
+                .filter(|(_, c)| c.is_lowercase())
+                .map(move |(i, c)| (w, i, c))
+                .collect::<Vec<_>>()
+        })
+        .collect();
 
-    let len_word = pp[idx_word].len();
-    let mut idx_char: usize = 0;
-    if len_word > 1 {
-        let dice = Uniform::from(0..len_word as u32);
-        let mut rng = rand::thread_rng();
-        idx_char = roll_dice(&dice, &mut rng);
+    if let Some(&(w, i, c)) = candidates.choose(&mut rand::thread_rng()) {
+        let word = &pp[w];
+        // to_uppercase() may yield more than one char in some languages.
+        pp[w] = format!(
+            "{}{}{}",
+            &word[..i],
+            c.to_uppercase(),
+            &word[i + c.len_utf8()..]
+        );
     }
-
-    let mut ch = String::from("");
-    let word = &pp[idx_word];
-    for (idx, c) in word.char_indices() {
-        if idx == idx_char {
-            // We convert to string because for some languages to_uppercase() may
-            // return more than one char.
-            if c.is_alphabetic() {
-                ch = c.to_uppercase().to_string();
-            }
-        }
-    }
-    let w1 = &word[0..idx_char];
-    let w2 = &word[idx_char + 1..];
-    pp[idx_word] = format!("{w1}{ch}{w2}");
 
     pp
 }
